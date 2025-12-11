@@ -1,0 +1,30 @@
+name: Buck2 macOS Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  buck2-build:
+    name: Buck2 Build (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-14, macos-15-intel]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Buck2 toolchain
+        run: |
+          set -euo pipefail
+          rustup install nightly-2025-08-01
+          cargo +nightly-2025-08-01 install --git https://github.com/facebook/buck2.git --rev c6bfcc629378a00921aa04597551442c9e2ea2eb buck2
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Build libra target with Buck2
+        run: buck2 build //:libra
